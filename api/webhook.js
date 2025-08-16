@@ -2,43 +2,30 @@ const crypto = require('crypto');
   const { Anthropic } = require('@anthropic-ai/sdk');
   const axios = require('axios');
 
-  // ç’°å¢ƒå¤‰æ•°
-  const LINE_CHANNEL_SECRET =
-  process.env.LINE_CHANNEL_SECRET;
-  const LINE_CHANNEL_ACCESS_TOKEN =
-  process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  // ŠÂ‹«•Ï”
+  const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
+  const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 
-  // ClaudeåˆæœŸåŒ–
+  // Claude‰Šú‰»
   const anthropic = new Anthropic({
-    apiKey: CLAUDE_API_KEY?.replace(/\s+/g, ''),
+    apiKey: CLAUDE_API_KEY?.replace(/€s+/g, ''),
   });
 
-  // LINEç½²åæ¤œè¨¼
-  function validateSignature(body, signature) {
-    const channelSecret = LINE_CHANNEL_SECRET;
-    const bodyString = JSON.stringify(body);
-    const hash = crypto.createHmac('sha256',
-  channelSecret).update(bodyString).digest('base64');
-    return hash === signature;
-  }
-
-  // ãƒ–ãƒ­ã‚°ç”Ÿæˆé–¢æ•°
+  // ƒuƒƒO¶¬ŠÖ”
   async function generateBlog(topic) {
     try {
-      console.log('Starting blog generation for topic:',
-  topic);
+      console.log('Starting blog generation for topic:', topic);
 
-      const prompt = `ã€Œ${topic}ã€ã«ã¤ã„ã¦ã®ãƒ–ãƒ­ã‚°è¨˜äº‹ã‚’æ—¥æœ¬
-  èªã§ä½œæˆã—ã¦ãã ã•ã„ã€‚
+      const prompt = `u${topic}v‚É‚Â‚¢‚Ä‚ÌƒuƒƒO‹L–‚ğ“ú–{Œê‚Åì¬‚µ‚Ä‚­‚¾‚³‚¢B
       
-      ä»¥ä¸‹ã®æ§‹æˆã§æ›¸ã„ã¦ãã ã•ã„ï¼š
-      1. ã‚­ãƒ£ãƒƒãƒãƒ¼ãªã‚¿ã‚¤ãƒˆãƒ«
-      2. å°å…¥æ–‡
-      3. æœ¬æ–‡ï¼ˆ3ã¤ã®ã‚»ã‚¯ã‚·ãƒ§ãƒ³ï¼‰
-      4. ã¾ã¨ã‚
+      ˆÈ‰º‚Ì\¬‚Å‘‚¢‚Ä‚­‚¾‚³‚¢F
+      1. ƒLƒƒƒbƒ`[‚Èƒ^ƒCƒgƒ‹
+      2. “±“ü•¶
+      3. –{•¶i3‚Â‚ÌƒZƒNƒVƒ‡ƒ“j
+      4. ‚Ü‚Æ‚ß
       
-      èª­ã¿ã‚„ã™ãã€SEOã‚‚æ„è­˜ã—ãŸæ–‡ç« ã§ãŠé¡˜ã„ã—ã¾ã™ã€‚`;
+      “Ç‚İ‚â‚·‚­SEO‚àˆÓ¯‚µ‚½\¬‚Å‚¨Šè‚¢‚µ‚Ü‚·B`;
 
       const message = await anthropic.messages.create({
         model: 'claude-3-5-sonnet-20241022',
@@ -47,53 +34,42 @@ const crypto = require('crypto');
       });
 
       const text = message.content[0].text;
-      console.log('Claude response received, length:',
-  text.length);
+      console.log('Claude response received, length:', text.length);
       return text;
 
     } catch (error) {
       console.error('Claude API error:', error.message);
-      return `# ${topic}ã«ã¤ã„ã¦\n\nã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ: 
-  ${error.message}`;
+      return `# ${topic}‚É‚Â‚¢‚Ä€n€nƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: ${error.message}`;
     }
   }
 
-  // Vercel KV Storage (ã¾ãŸã¯ä¸€æ™‚çš„ãªä»£æ›¿æ¡ˆ)
+  // ƒuƒƒO•Û‘¶ŠÖ”iŠÈˆÕ”Åj
   const blogStorage = [];
 
-  // ãƒ–ãƒ­ã‚°ä¿å­˜é–¢æ•°ï¼ˆç°¡æ˜“ç‰ˆï¼‰
   async function saveToStorage(content, topic) {
     try {
       const fileName = `blog_${topic}_${Date.now()}.md`;
-
-      // Vercel KV Storageã¾ãŸã¯å¤–éƒ¨DBã«ä¿å­˜ã™ã‚‹ä»£ã‚ã‚Šã«ã€
-      // ä¸€æ™‚çš„ã«ãƒ¡ãƒ¢ãƒªã«ä¿å­˜ï¼ˆå¾Œã§Supabaseãªã©ã«ç§»è¡Œï¼‰
       blogStorage.push({
         fileName,
         content,
         topic,
         createdAt: new Date()
       });
-
       console.log('Blog saved:', fileName);
       return fileName;
-
     } catch (error) {
       console.error('Save error:', error);
       throw error;
     }
   }
 
-  // LINEè¿”ä¿¡æ©Ÿèƒ½
+  // LINE•ÔMŠÖ”
   async function replyToLine(replyToken, message) {
     try {
       console.log('Sending LINE reply...');
+      const cleanToken = LINE_CHANNEL_ACCESS_TOKEN?.replace(/€s+/g, '');
 
-      const cleanToken =
-  LINE_CHANNEL_ACCESS_TOKEN?.replace(/\s+/g, '');
-
-      const response = await
-  axios.post('https://api.line.me/v2/bot/message/reply', {
+      const response = await axios.post('https://api.line.me/v2/bot/message/reply', {
         replyToken: replyToken,
         messages: [{
           type: 'text',
@@ -108,67 +84,59 @@ const crypto = require('crypto');
 
       console.log('Reply sent successfully');
     } catch (error) {
-      console.error('Error sending reply:',
-  error.response?.data || error.message);
+      console.error('Error sending reply:', error.response?.data || error.message);
     }
   }
 
-  // ãƒ¡ã‚¤ãƒ³ã®Webhookãƒãƒ³ãƒ‰ãƒ©ãƒ¼
+  // ƒƒCƒ“‚ÌWebhookƒnƒ“ƒhƒ‰[
   module.exports = async (req, res) => {
     console.log('Webhook received');
 
-    // CORSå¯¾å¿œ
+    // CORS‘Î‰
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, 
-  GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers',
-  'Content-Type, x-line-signature');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-line-signature');
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
     }
 
     if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not 
-  allowed' });
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
       const events = req.body.events || [];
 
       for (const event of events) {
-        if (event.type === 'message' && event.message.type
-  === 'text') {
+        if (event.type === 'message' && event.message.type === 'text') {
           const text = event.message.text;
           const replyToken = event.replyToken;
           console.log('Message:', text);
 
           try {
-            // ãƒ–ãƒ­ã‚°ç”Ÿæˆ
+            // ƒuƒƒO¶¬
             const blogContent = await generateBlog(text);
             console.log('Blog generated successfully');
 
-            // ä¿å­˜
-            const fileName = await
-  saveToStorage(blogContent, text);
+            // •Û‘¶
+            const fileName = await saveToStorage(blogContent, text);
             console.log('Saved:', fileName);
 
-            // LINE ã«æˆåŠŸãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é€ä¿¡
-            const successMessage = `ğŸ‰ 
-  ãƒ–ãƒ­ã‚°è¨˜äº‹ã®ç”ŸæˆãŒå®Œäº†ã—ã¾ã—ãŸï¼
+            // LINE ‚É¬Œ÷ƒƒbƒZ[ƒW‚ğ•ÔM
+            const successMessage = `? ƒuƒƒO‹L–‚Ì¶¬‚ªŠ®—¹‚µ‚Ü‚µ‚½I
 
-  ğŸ“ ãƒ†ãƒ¼ãƒ: ã€Œ${text}ã€
-  ğŸ“„ ãƒ•ã‚¡ã‚¤ãƒ«å: ${fileName}
-  ğŸŒ ãƒ–ãƒ­ã‚°ã‚µã‚¤ãƒˆ: https://your-blog.vercel.app
+? ƒe[ƒ}: u${text}v
+? ƒtƒ@ƒCƒ‹–¼: ${fileName}
+? ƒuƒƒOƒTƒCƒg: https://your-blog.vercel.app
 
-  æ–°ã—ã„è¨˜äº‹ãŒãƒ–ãƒ­ã‚°ã‚µã‚¤ãƒˆã«è¡¨ç¤ºã•ã‚Œã¦ã„ã¾ã™ï¼`;
+V‚µ‚¢‹L–‚ªƒuƒƒOƒTƒCƒg‚É•\¦‚³‚ê‚Ä‚¢‚Ü‚·I`;
 
             await replyToLine(replyToken, successMessage);
 
           } catch (error) {
             console.error('Blog generation error:', error);
-            await replyToLine(replyToken, `âŒ 
-  ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ: ${error.message}`);
+            await replyToLine(replyToken, `? ƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: ${error.message}`);
           }
         }
       }
